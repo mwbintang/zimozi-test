@@ -1,14 +1,12 @@
 import { Router } from 'express';
-import userRoute from "./user.routes"
 import taskRoute from "./task.routes"
 import authRouter from "./auth.routes"
+import taskHistoryRoute from "./task_history.routes"
 
 const router = Router();
 
-router.use("/user", userRoute)
-router.use("/task", taskRoute)
 router.use("/", authRouter)
-// router.get('/health', indexController.healthCheck);
-// router.get('/api-info', indexController.getApiInfo);
+router.use("/task", taskRoute)
+router.use("/task-history", taskHistoryRoute)
 
 export default router; 

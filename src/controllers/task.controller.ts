@@ -4,11 +4,14 @@ import { success } from '../helpers/response_json';
 import { AuthenticatedRequest } from "../types/express"
 // import { z } from 'zod';
 
-export const getAllTasks = async (_req: Request, res: Response, next: NextFunction) => {
+export const getUserTasks = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-        const tasks = await taskService.getAllTasks();
+        const { userId } = _req.params
+        const { user } = _req
+        const { page = "1", limit = "10" } = _req.query
+        const tasks = await taskService.getUserTasks(userId, user, page as string, limit as string);
 
-        success(res, 200, "Success get all task", tasks);
+        success(res, 200, "Success get all task by user ID", tasks);
     } catch (error) {
         next(error);
     }
@@ -18,7 +21,7 @@ export const getTaskById = async (_req: AuthenticatedRequest, res: Response, nex
     try {
         const { id } = _req.params
         const { user } = _req
-        const tasks = await taskService.getTaskById(parseInt(id), user);
+        const tasks = await taskService.getTaskById(id, user);
 
         success(res, 200, "Success get all task", tasks);
     } catch (error) {
@@ -40,8 +43,10 @@ export const createTask = async (_req: AuthenticatedRequest, res: Response, next
 
 export const updateTask = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
+        const { id } = _req.params
         const { title, description, status, dueDate, assignedTo } = _req.body
-        const tasks = await taskService.updateTask(title, description, status, dueDate, assignedTo);
+        const { user } = _req
+        const tasks = await taskService.updateTask(id, title, description, status as string, dueDate, assignedTo, user);
 
         success(res, 203, "Success update task", tasks);
     } catch (error) {
@@ -52,7 +57,7 @@ export const updateTask = async (_req: AuthenticatedRequest, res: Response, next
 export const deleteTask = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
         const { id } = _req.params
-        const tasks = await taskService.deleteTask(parseInt(id));
+        const tasks = await taskService.deleteTask(id);
 
         success(res, 204, "Success delete task", tasks);
     } catch (error) {

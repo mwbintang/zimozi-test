@@ -16,9 +16,12 @@ export const authService = {
 
         const user = await User.create({ email, password, name, role });
         const token = JwtHelper.generateToken({ id: user._id });
+        const refreshToken = JwtHelper.generateRefreshToken({ id: user._id });
+        await User.findByIdAndUpdate(user._id, { $set: { refreshToken } });
 
         return {
             token,
+            refreshToken,
             user: {
                 id: user._id,
                 name: user.name,
@@ -39,15 +42,33 @@ export const authService = {
         }
 
         const token = JwtHelper.generateToken({ id: user._id });
+        const refreshToken = JwtHelper.generateRefreshToken({ id: user._id });
+
+        await User.findByIdAndUpdate(user._id, { $set: { refreshToken } });
 
         return {
             token,
+            refreshToken,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email
             }
         };
+    },
+
+    refreshToken: async (refreshToken: string) => {
+        const decoded = JwtHelper.verifyToken(refreshToken);
+        const user = await User.findOne({ _id: decoded.id, refreshToken });
+        if (!user) {
+            throw new Error('Invalid refresh token');
+        }
+
+        const token = JwtHelper.generateToken({ id: user._id });
+        const newRefreshToken = JwtHelper.generateRefreshToken({ id: user._id });
+        await User.findByIdAndUpdate(user._id, { $set: { refreshToken: newRefreshToken } });
+
+        return { token, refreshToken: newRefreshToken };
     },
 
     changePassword: async (userId: string, currentPassword: string, newPassword: string) => {
@@ -117,6 +138,17 @@ export const authService = {
         if (!user) {
             throw new Error('User not found');
         }
+        return user;
+    },
+
+    logout: async (userId: string) => {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        
+        user.refreshToken = null;
+        await user.save();
         return user;
     }
 };

@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { UserTask } from './index';
 
 export interface ITask extends Document {
     title: string;
@@ -22,6 +23,15 @@ TaskSchema.virtual("assignedUsers", {
     ref: "user_task", // Reference to UserTask model
     localField: "_id", // Task _id
     foreignField: "taskId", // UserTask taskId field
+});
+
+TaskSchema.pre("findOneAndDelete", async function (next) {
+    const task = this.getQuery(); // Get the task being deleted
+
+    // Delete related UserTask records
+    await UserTask.deleteMany({ taskId: task._id });
+
+    next();
 });
 
 TaskSchema.set("toObject", { virtuals: true });

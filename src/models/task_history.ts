@@ -8,8 +8,8 @@ export interface ITaskHistory extends Document {
 }
 
 const TaskHistorySchema = new Schema<ITaskHistory>({
-    taskId: { type: Schema.Types.ObjectId, ref: 'Task', required: true },
-    updatedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    taskId: { type: Schema.Types.ObjectId, ref: 'task', required: true },
+    updatedBy: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     status: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
 });

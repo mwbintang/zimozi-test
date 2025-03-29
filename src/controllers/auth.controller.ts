@@ -70,3 +70,28 @@ export const getCurrentUser = async (req: AuthenticatedRequest, res: Response, n
         next(error);
     }
 }
+
+export const logout = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            throw new Error('User not authenticated');
+        }
+
+        const result = await authService.logout(req.user.id);
+        success(res, 200, "Logout successful", result);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const refreshToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { refreshToken } = req.body;
+        const result = await authService.refreshToken(refreshToken);
+        
+        success(res, 200, "Token refreshed", result);
+    } catch (error) {
+        next(error);
+    }
+}
+

@@ -1,19 +1,23 @@
 import { Router } from 'express';
 import { authController } from '../controllers/index.controller';
-// // import { authMiddleware } from '../middleware/auth.middleware';
+import { authAllRole } from '../middlewares/auth';
+import { limiter } from '../middlewares/rate_limiter';
 
 const router = Router();
 
-// // Public routes
+router.use(limiter);
+
+// Public routes
 router.post('/login', authController.login);
 router.post('/register', authController.register);
-// router.post('/forgot-password', authController.forgotPassword);
-// router.post('/reset-password', authController.resetPassword);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
+router.post('/refresh-token', authController.refreshToken);
 
-// // Protected routes
-// // router.use(authMiddleware);
-// router.post('/logout', authController.logout);
-// router.get('/me', authController.getCurrentUser);
-// router.put('/change-password', authController.changePassword);
+// Protected routes
+router.use(authAllRole);
+router.post('/logout', authController.logout);
+router.get('/me', authController.getCurrentUser);
+router.put('/change-password', authController.changePassword);
 
 export default router; 

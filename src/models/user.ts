@@ -8,6 +8,7 @@ interface IUser extends Document {
   role: 'Admin' | 'Manager' | 'User';
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  refreshToken: string | null;
   resetPasswordToken: string | null;
   resetPasswordExpires: Date | null;
 }
@@ -18,8 +19,9 @@ const UserSchema = new Schema<IUser>({
   password: { type: String, required: true },
   role: { type: String, enum: ['Admin', 'Manager', 'User'], default: 'User' },
   createdAt: { type: Date, default: Date.now },
+  refreshToken: { type: String },
   resetPasswordToken: { type: String },
-  resetPasswordExpires: { type: Date }
+  resetPasswordExpires: { type: Date },
 });
 
 // Hash password before saving
