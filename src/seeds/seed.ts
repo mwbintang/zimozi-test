@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { Command } from 'commander';
-import { User, Task, TaskHistory, TaskComment, Notification, UserTask } from '../models';
+import { User } from '../models';
+import { PasswordHelper } from '../helpers/password_helper';
 
 dotenv.config();
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/task_management';
@@ -26,8 +27,14 @@ const seedDatabase = async () => {
 
     // Load and insert seed data
     const users = loadJSON('users');
+    const processedUsers = await Promise.all(
+      users.map(async (user: any) => ({
+        ...user,
+        password: await PasswordHelper.hashPassword(user.password)
+      }))
+    );
 
-    await User.insertMany(users);
+    await User.insertMany(processedUsers);
     console.log('Users seeded');
 
     console.log('Seeding completed successfully');

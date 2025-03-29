@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { PasswordHelper } from '../helpers/password_helper';
 
 interface IUser extends Document {
   name: string;
@@ -6,6 +7,9 @@ interface IUser extends Document {
   password: string;
   role: 'Admin' | 'Manager' | 'User';
   createdAt: Date;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  resetPasswordToken: string | null;
+  resetPasswordExpires: Date | null;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -14,6 +18,25 @@ const UserSchema = new Schema<IUser>({
   password: { type: String, required: true },
   role: { type: String, enum: ['Admin', 'Manager', 'User'], default: 'User' },
   createdAt: { type: Date, default: Date.now },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date }
 });
+
+// Hash password before saving
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+
+  try {
+    this.password = await PasswordHelper.hashPassword(this.password);
+    next();
+  } catch (error) {
+    next(error as Error);
+  }
+});
+
+// Compare password method
+UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  return PasswordHelper.comparePasswords(candidatePassword, this.password);
+};
 
 export const User = mongoose.model<IUser>('user', UserSchema);
