@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { Command } from 'commander';
 import { User } from '../models';
-import { PasswordHelper } from '../helpers/password_helper';
+import * as PasswordHelper from '../helpers/password_helper';
 
 dotenv.config();
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/task_management';

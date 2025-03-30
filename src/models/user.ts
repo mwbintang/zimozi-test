@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { PasswordHelper } from '../helpers/password_helper';
+import * as PasswordHelper from '../helpers/password_helper';
 
 interface IUser extends Document {
   name: string;

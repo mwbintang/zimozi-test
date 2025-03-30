@@ -1,6 +1,6 @@
 import { User } from '../models';
 import * as JwtHelper from '../helpers/jwt_helper';
-import { PasswordHelper } from '../helpers/password_helper';
+import * as PasswordHelper from '../helpers/password_helper';
 
 export const authService = {
     register: async (email: string, password: string, name: string, role: string) => {
