@@ -8,8 +8,9 @@
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "seed": "ts-node src/seeds/seed.ts seed",
-    "worker": "ts-node src/queues/notification_worker.ts"
+    "seed": "ts-node src/seeds/seed.ts",
+    "worker:dev": "ts-node src/queues/notification_worker.ts",
+    "worker": "node dist/queues/notification_worker.js"
   },
   "keywords": [],
   "author": "",
