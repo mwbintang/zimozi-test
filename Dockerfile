@@ -1,23 +1,39 @@
-# Use an official Node.js image as the base
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package.json package-lock.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
-RUN npm install --only=production
+RUN npm ci
 
-# Copy the entire application
+# Copy source code
 COPY . .
 
-# Expose the application port
+# Build TypeScript
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Copy built files from builder
+COPY --from=builder /app/dist ./dist
+
+# Copy environment file
+COPY .env .env
+
+# Expose port
 EXPOSE 3000
 
-# Set environment variables (optional, can be overridden)
-ENV NODE_ENV=production
-
 # Start the application
-CMD ["node", "dist/server.js"]
+CMD ["npm", "start"]
