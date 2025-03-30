@@ -2,16 +2,17 @@ import { UserTask, Task } from '../models';
 import { UserRole } from '../constants/roles';
 import { offset, paginationData } from '../helpers/pagination';
 import { createTaskHistory } from '../utils/task_history';
-import { redis } from '../config/redis';
+import { invalidateCache, setRedisCache, getRedisCache } from '../helpers/redis';
+import { addNotificationJob } from '../queues/notification_queue';
 
 export const getUserTasks = async (userId: string, user: any, page: string, limit: string) => {
     if (user.role == UserRole.USER && user.id != userId) {
         throw new Error('FORBIDDEN')
     }
 
-    const cachedTasks = await redis.get(`tasks:${userId},${page},${limit}`);
+    const cachedTasks = await getRedisCache(`tasks:${userId},${page},${limit}`);
     if (cachedTasks) {
-        return JSON.parse(cachedTasks);
+        return cachedTasks;
     }
 
     // Convert query params to numbers
@@ -32,14 +33,15 @@ export const getUserTasks = async (userId: string, user: any, page: string, limi
     const totalTasks = await Task.countDocuments({ _id: { $in: taskIds } });
 
     const taskPaginationData = paginationData(tasks, totalTasks, pageNumber, limitNumber);
-    await redis.set(`tasks:${userId},${page},${limit}`, JSON.stringify(taskPaginationData));
+    await setRedisCache(`tasks:${userId},${page},${limit}`, taskPaginationData);
+
     return taskPaginationData;
 }
 
 export const getTaskById = async (id: string, user: any) => {
-    const cachedTask = await redis.get(`task:${id}`);
+    const cachedTask = await getRedisCache(`task:${id}`);
     if (cachedTask) {
-        return JSON.parse(cachedTask);
+        return cachedTask;
     }
 
     const task: any = await Task.findOne({ _id: id }).populate("createdBy")
@@ -76,7 +78,8 @@ export const getTaskById = async (id: string, user: any) => {
         }
     }
 
-    await redis.set(`task:${id}`, JSON.stringify(task));
+    await setRedisCache(`task:${id}`, task);
+
     return task;
 }
 
@@ -109,6 +112,7 @@ export const createTask = async (title: string, description: string, status: str
     await UserTask.insertMany(assignedToFormated)
 
     await createTaskHistory(task._id, user.id, status)
+    await addNotificationJob(user.id, "Your tasks have been updated!");
 
     const response = await Task.findOne({ _id: task.id })
         .populate("createdBy")
@@ -122,12 +126,8 @@ export const createTask = async (title: string, description: string, status: str
         })
         .exec();
 
-    const keys = await redis.keys("tasks:*");
-    if (keys.length > 0) {
-        await Promise.all(keys.map((key) => redis.del(key)));
-    }
-    
-    await redis.set(`task:${task._id}`, JSON.stringify(response));
+    await invalidateCache("tasks:*");
+    await setRedisCache(`task:${task._id}`, response);
 
     return response
 }
@@ -183,16 +183,15 @@ export const updateTask = async (
         })
         .exec();
 
-    const keys = await redis.keys("tasks:*");
-    if (keys.length > 0) {
-        await Promise.all(keys.map((key) => redis.del(key)));
-    }
-
-    await redis.set(`task:${updatedTask._id}`, JSON.stringify(response));
+    await invalidateCache("tasks:*");
+    await setRedisCache(`task:${updatedTask._id}`, response);
 
     return response;
 };
 
 export const deleteTask = async (id: string) => {
+    await invalidateCache("tasks:*");
+    await invalidateCache(`task:${id}`);
+    
     return Task.findOneAndDelete({ _id: id });
 }

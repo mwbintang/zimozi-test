@@ -1,5 +1,5 @@
 import { TaskComment } from "../models";
-import { redis } from "../config/redis";
+import { invalidateCache, getRedisCache, setRedisCache } from '../helpers/redis';
 
 export const createComment = async (taskId: string, comment: string, userId: any) => {
     if (!userId) {
@@ -7,31 +7,33 @@ export const createComment = async (taskId: string, comment: string, userId: any
     }
 
     const newComment = await TaskComment.create({ taskId, comment, userId });
-    await redis.del(`comments:${taskId}`);
+    await invalidateCache(`comments:${taskId}`);
 
     return newComment;
 }
 
 export const getCommentsByTask = async (taskId: string) => {
-    const cachedComments = await redis.get(`comments:${taskId}`);
+    const cachedComments = await getRedisCache(`comments:${taskId}`);
     if (cachedComments) {
-        return JSON.parse(cachedComments);
+        return cachedComments;
     }
 
     const comments = await TaskComment.find({ taskId });
-    await redis.set(`comments:${taskId}`, JSON.stringify(comments));
+    await setRedisCache(`comments:${taskId}`, comments);
     
     return comments;
 }
 
 export const updateComment = async (commentId: string, comment: string) => {
     const updatedComment = await TaskComment.findByIdAndUpdate(commentId, { comment }, { new: true });
-    await redis.del(`comments:${updatedComment?.taskId}`);
+    await invalidateCache(`comments:${updatedComment?.taskId}`);
 
     return updatedComment;
 }
 
 export const deleteComment = async (commentId: string) => {
+    await invalidateCache(`comments:${commentId}`);
     const deletedComment = await TaskComment.findByIdAndDelete(commentId);
+    
     return deletedComment;
 }

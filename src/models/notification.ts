@@ -8,7 +8,7 @@ export interface INotification extends Document {
 }
 
 const NotificationSchema = new Schema<INotification>({
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     message: { type: String, required: true },
     isRead: { type: Boolean, default: false },
     timestamp: { type: Date, default: Date.now },
