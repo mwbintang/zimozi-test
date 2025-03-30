@@ -20,7 +20,7 @@ connectDB();
 
 // Routes
 app.get('/', (req, res) => {
-    res.json({ message: 'Hello World!' });
+    res.json({ message: 'Hello from Vercel Express! - Bintang' });
 });
 
 app.use('/API/v1', routes);
