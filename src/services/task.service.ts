@@ -2,28 +2,46 @@ import { UserTask, Task } from '../models';
 import { UserRole } from '../constants/roles';
 import { offset, paginationData } from '../helpers/pagination';
 import { createTaskHistory } from '../utils/task_history';
+import { redis } from '../config/redis';
+
 export const getUserTasks = async (userId: string, user: any, page: string, limit: string) => {
-     // Convert query params to numbers
-     const pageNumber = parseInt(page as string, 10);
-     const limitNumber = parseInt(limit as string, 10);
-     const skip = offset(pageNumber, limitNumber);
+    if (user.role == UserRole.USER && user.id != userId) {
+        throw new Error('FORBIDDEN')
+    }
 
-     // Find all tasks where the user is assigned
-     const userTasks = await UserTask.find({ userId }).select("taskId");
-     const taskIds = userTasks.map((ut) => ut.taskId);
+    const cachedTasks = await redis.get(`tasks:${userId},${page},${limit}`);
+    if (cachedTasks) {
+        return JSON.parse(cachedTasks);
+    }
 
-     // Fetch tasks with pagination
-     const tasks = await Task.find({ _id: { $in: taskIds } })
-         .skip(skip)
-         .limit(limitNumber);
+    // Convert query params to numbers
+    const pageNumber = parseInt(page as string, 10);
+    const limitNumber = parseInt(limit as string, 10);
+    const skip = offset(pageNumber, limitNumber);
 
-     // Count total tasks for pagination
-     const totalTasks = await Task.countDocuments({ _id: { $in: taskIds } });
+    // Find all tasks where the user is assigned
+    const userTasks = await UserTask.find({ userId }).select("taskId");
+    const taskIds = userTasks.map((ut) => ut.taskId);
 
-     return paginationData(tasks, totalTasks, pageNumber, limitNumber);
+    // Fetch tasks with pagination
+    const tasks = await Task.find({ _id: { $in: taskIds } })
+        .skip(skip)
+        .limit(limitNumber);
+
+    // Count total tasks for pagination
+    const totalTasks = await Task.countDocuments({ _id: { $in: taskIds } });
+
+    const taskPaginationData = paginationData(tasks, totalTasks, pageNumber, limitNumber);
+    await redis.set(`tasks:${userId},${page},${limit}`, JSON.stringify(taskPaginationData));
+    return taskPaginationData;
 }
 
 export const getTaskById = async (id: string, user: any) => {
+    const cachedTask = await redis.get(`task:${id}`);
+    if (cachedTask) {
+        return JSON.parse(cachedTask);
+    }
+
     const task: any = await Task.findOne({ _id: id }).populate("createdBy")
         .populate({
             path: "assignedUsers",
@@ -32,6 +50,18 @@ export const getTaskById = async (id: string, user: any) => {
                 path: "userId",
                 model: "user",
             },
+        })
+        .populate({
+            path: "comments",
+            model: "task_comment",
+            populate: {
+                path: "userId",
+                model: "user",
+            },
+        })
+        .populate({
+            path: "history",
+            model: "task_history",
         })
         .exec();
 
@@ -46,6 +76,7 @@ export const getTaskById = async (id: string, user: any) => {
         }
     }
 
+    await redis.set(`task:${id}`, JSON.stringify(task));
     return task;
 }
 
@@ -90,6 +121,13 @@ export const createTask = async (title: string, description: string, status: str
             },
         })
         .exec();
+
+    const keys = await redis.keys("tasks:*");
+    if (keys.length > 0) {
+        await Promise.all(keys.map((key) => redis.del(key)));
+    }
+    
+    await redis.set(`task:${task._id}`, JSON.stringify(response));
 
     return response
 }
@@ -144,6 +182,13 @@ export const updateTask = async (
             },
         })
         .exec();
+
+    const keys = await redis.keys("tasks:*");
+    if (keys.length > 0) {
+        await Promise.all(keys.map((key) => redis.del(key)));
+    }
+
+    await redis.set(`task:${updatedTask._id}`, JSON.stringify(response));
 
     return response;
 };

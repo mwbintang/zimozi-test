@@ -1,12 +1,6 @@
 import { TaskHistory } from "../models";
-import mongoose from "mongoose";
+import { redis } from "../config/redis";
 
-/**
- * Creates a task history entry
- * @param {any} taskId - The ID of the task
- * @param {any} updatedBy - The ID of the user who made the update
- * @param {string} status - The status of the task
- */
 export const createTaskHistory = async (
     taskId: any,
     updatedBy: any,
@@ -19,6 +13,11 @@ export const createTaskHistory = async (
             status,
             timestamp: new Date(),
         });
+
+        const keys = await redis.keys("task_history:*");
+        if (keys.length > 0) {
+            await Promise.all(keys.map((key: string) => redis.del(key)));
+        }
     } catch (error) {
         console.error("Error creating task history:", error);
     }

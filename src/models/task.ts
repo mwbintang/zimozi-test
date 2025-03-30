@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { UserTask } from './index';
+import { UserTask, TaskComment } from './index';
 
 export interface ITask extends Document {
     title: string;
@@ -25,11 +25,24 @@ TaskSchema.virtual("assignedUsers", {
     foreignField: "taskId", // UserTask taskId field
 });
 
+TaskSchema.virtual("comments", {
+    ref: "task_comment", // Reference to TaskComment model
+    localField: "_id", // Task _id
+    foreignField: "taskId", // TaskComment taskId field
+});
+
+TaskSchema.virtual("history", {
+    ref: "task_history", // Reference to TaskHistory model
+    localField: "_id", // Task _id
+    foreignField: "taskId", // TaskHistory taskId field
+});
+
 TaskSchema.pre("findOneAndDelete", async function (next) {
     const task = this.getQuery(); // Get the task being deleted
 
     // Delete related UserTask records
     await UserTask.deleteMany({ taskId: task._id });
+    await TaskComment.deleteMany({ taskId: task._id });
 
     next();
 });

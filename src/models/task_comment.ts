@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-
 export interface ITaskComment extends Document {
     taskId: mongoose.Types.ObjectId;
     userId: mongoose.Types.ObjectId;
@@ -9,8 +8,8 @@ export interface ITaskComment extends Document {
 }
 
 const TaskCommentSchema = new Schema<ITaskComment>({
-    taskId: { type: Schema.Types.ObjectId, ref: 'Task', required: true },
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    taskId: { type: Schema.Types.ObjectId, ref: 'task', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'user', required: true },
     comment: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
 });

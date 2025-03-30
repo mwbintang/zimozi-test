@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { JwtHelper } from '../helpers/jwt_helper';
-import { User } from '../models/user';
+import * as JwtHelper from '../helpers/jwt_helper';
+import { User } from '../models';
 import { UserRole } from '../constants/roles';
 // import {AuthenticatedRequest} from "../types/express"
 // import { ApiError } from '../utils/ApiError';

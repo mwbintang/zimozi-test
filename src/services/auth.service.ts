@@ -1,5 +1,5 @@
-import { User } from '../models/user';
-import { JwtHelper } from '../helpers/jwt_helper';
+import { User } from '../models';
+import * as JwtHelper from '../helpers/jwt_helper';
 import { PasswordHelper } from '../helpers/password_helper';
 
 export const authService = {
