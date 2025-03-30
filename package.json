@@ -26,7 +26,8 @@
     "moment-timezone": "^0.5.48",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

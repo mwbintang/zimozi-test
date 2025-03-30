@@ -2,13 +2,13 @@ import { NextFunction, Request, Response } from 'express';
 import { taskService } from '../services/index.service';
 import { success } from '../helpers/response_json';
 import { AuthenticatedRequest } from "../types/express"
-// import { z } from 'zod';
+import { taskValidation } from '../validations/index.validations';
 
 export const getUserTasks = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-        const { userId } = _req.params
+        const { userId } = taskValidation.userIdParamSchema.parse(_req.params);
         const { user } = _req
-        const { page = "1", limit = "10" } = _req.query
+        const { page, limit } = taskValidation.paginationSchema.parse(_req.query);
         const tasks = await taskService.getUserTasks(userId, user, page as string, limit as string);
 
         success(res, 200, "Success get all task by user ID", tasks);
@@ -19,7 +19,7 @@ export const getUserTasks = async (_req: AuthenticatedRequest, res: Response, ne
 
 export const getTaskById = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-        const { id } = _req.params
+        const { id } = taskValidation.idParamSchema.parse(_req.params);
         const { user } = _req
         const tasks = await taskService.getTaskById(id, user);
 
@@ -31,7 +31,7 @@ export const getTaskById = async (_req: AuthenticatedRequest, res: Response, nex
 
 export const createTask = async (_req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
-        const { title, description, status, dueDate, assignedTo } = _req.body
+        const { title, description, status, dueDate, assignedTo } = taskValidation.taskSchema.parse(_req.body);
         const { user } = _req
         const tasks = await taskService.createTask(title, description, status, dueDate, assignedTo, user);
 
