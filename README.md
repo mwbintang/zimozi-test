@@ -231,13 +231,6 @@ jobs:
 - **Database Indexing**: Optimized for common queries
 - **Background Jobs**: BullMQ for async tasks
 
-### Testing
-
-- **Unit Tests**: Jest for service and utility functions
-- **Integration Tests**: Supertest for API endpoints
-- **Test Coverage**: Minimum 80% coverage required
-- **Mocking**: Jest mocks for external services
-
 ### Error Handling
 
 - **Global Error Handler**: Centralized error management
@@ -258,13 +251,6 @@ jobs:
 - **Commit Messages**: Conventional commits format
 - **Version Control**: Semantic versioning
 - **Release Process**: Automated release notes
-
-### Monitoring & Logging
-
-- **Application Metrics**: Performance monitoring
-- **Error Tracking**: Sentry integration
-- **Log Aggregation**: Centralized logging
-- **Health Checks**: API health monitoring
 
 ## Development Guidelines
 
