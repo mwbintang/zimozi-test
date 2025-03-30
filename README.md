@@ -192,13 +192,50 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      # Login to Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
         with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run build
-      # Add deployment steps here
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      # Build and push Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/task-management:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      # Deploy to server
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /path/to/project
+            docker-compose pull
+            docker-compose up -d
 ```
+
+### Required Secrets
+
+Add the following secrets to your GitHub repository:
+
+- `DOCKERHUB_USERNAME`: Your Docker Hub username
+- `DOCKERHUB_TOKEN`: Your Docker Hub access token
+- `SERVER_HOST`: Your server's IP address or domain
+- `SERVER_USERNAME`: SSH username for the server
+- `SSH_PRIVATE_KEY`: SSH private key for server access
 
 ### Deployment Environments
 
